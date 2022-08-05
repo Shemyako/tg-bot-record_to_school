@@ -1,6 +1,6 @@
 import gspread
 ###
-#   Сделать изменение кэша __value после записи
+#   Сделать изменение кэша __values после записи
 ###
 
 
@@ -59,7 +59,6 @@ class googleSheet():
     # Получение дат, на которые можно соверщить запись
     def get_dates(self):
         return self.__dates
-        # return list(self.__dates)
 
 
     # Смотрим возможность записи на какую-то дату
@@ -92,16 +91,30 @@ class googleSheet():
         if (time not in self.__dates[date]):
             return -1
 
+        if (len(data) != 5):
+            return None
+
         # Находим индекс номера строки выбранного времени
         index = self.__dates[date].index(time) + 1
+
+        # Обновляем кэш
+        a = int(self.__dates[date][index]) - 1
+        # print(a)
+        self.__values[a][2:7] = data
 
         # Изменяем таблицу
         self.__make_record(self.__dates[date][index], data)
 
+        # Если больше свободного времени нет в таблице, удаляем это время
+        if (len(self.__dates[date]) == 2):
+            del self.__dates[date]
+            return 1
+
         # Удаляем из кэша запись
         del self.__dates[date][index-1]
         del self.__dates[date][index-1]
-        # return self.__dates
+
+        return 1
 
     
     # Изменяем данные в таблице (записываем человека)
@@ -122,20 +135,9 @@ class googleSheet():
             if i[0] != "":
                 cur_day = i[0]
             
-            print(i)
+            # print(i)
             if i[5] == tg_id:
                 answer.append(i[0] + " " + i[1])
                 answer.append(counter)
         
         return answer
-
-
-
-        
-
-
-
-
-
-
-
