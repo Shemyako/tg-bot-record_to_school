@@ -10,8 +10,8 @@ class googleSheet():
         
     # Обновление данных их google sheet по ссылке
     def __update(self):
-        self.__sh = gc.open_by_url(self.tablename)
-        self.__values = print(sh.sheet1.get_all_values())
+        self.__sh = __gc.open_by_url(self.tablename)
+        self.__values = print(__sh.sheet1.get_all_values())
 
 
 
