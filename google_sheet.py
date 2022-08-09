@@ -13,16 +13,20 @@ class googleSheet():
         # Открытие токена
         self.__gc = gspread.service_account(self.__filename)
         # Получаем данные из гугл таблицы
-        self.__get_values()
+        # self.__get_values()
         
 
     # Обновление данных их google sheet по ссылке
-    def __get_values(self):
-        self.__sh = self.__gc.open_by_url(self.__tablename)
-        # Список списков со всеми строками из гугл таблицы
-        self.__values = self.__sh.sheet1.get_all_values()
-        # Обрабатываем полученные данные
-        self.__form_dates()
+    def __get_values(func):
+        # print(func)
+        def decorated_get_values(self, *args):
+            self.__sh = self.__gc.open_by_url(self.__tablename)
+            # Список списков со всеми строками из гугл таблицы
+            self.__values = self.__sh.sheet1.get_all_values()
+            # Обрабатываем полученные данные
+            self.__form_dates()
+            return func(self, *args)
+        return decorated_get_values
 
 
     # Просматриваем данные из __get_values и формируем словарь с датами к записи
@@ -57,11 +61,14 @@ class googleSheet():
 
 
     # Получение дат, на которые можно соверщить запись
+    @__get_values
     def get_dates(self):
-        return self.__dates
+        # print(2)
+        return self.__values
 
 
     # Смотрим возможность записи на какую-то дату
+    @__get_values
     def make_date_record(self, date:str):
         '''
         На вход дату для получения возможного времени
@@ -76,6 +83,7 @@ class googleSheet():
     
 
     # Пытаемся записаться на какое-то время какого-то дня
+    @__get_values
     def make_time_record(self, date:str, time:str, data:list):
         '''
         На вход дату и время для записи
@@ -123,6 +131,7 @@ class googleSheet():
 
 
     # Получить все записи пользователя
+    @__get_values
     def get_my_record(self, tg_id):
         tg_id = str(tg_id)
         cur_day = ""
@@ -135,9 +144,8 @@ class googleSheet():
             if i[0] != "":
                 cur_day = i[0]
             
-            # print(i)
             if i[5] == tg_id:
                 answer.append(i[0] + " " + i[1])
                 answer.append(counter)
-        
+                
         return answer
