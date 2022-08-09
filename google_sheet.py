@@ -1,11 +1,12 @@
 import gspread
-###
-#   Сделать изменение кэша __values после записи
-###
-
 
 
 class googleSheet():
+    '''
+    table:
+    date|time|fio|class|reason|phone|tg_id
+    '''
+    
     # Конструктор. Получает имя файла, в котором токены и ссылку на google sheet
     def __init__(self, Filename:str, Tablename:str, ):
         self.__filename = Filename
@@ -42,7 +43,7 @@ class googleSheet():
             counter += 1
             # Если дата есть, она - актуальная
             if (i[0] != ""):
-                act_date = i[0]
+                act_date = i[0].replace('\n', ' ')
                 self.__dates[act_date] = []
             
             # Если поле с ФИО (i[2]) пустое, => запись возможна
@@ -64,7 +65,7 @@ class googleSheet():
     @__get_values
     def get_dates(self):
         # print(2)
-        return self.__values
+        return self.__dates
 
 
     # Смотрим возможность записи на какую-то дату
@@ -76,10 +77,11 @@ class googleSheet():
         0 -> Нельзя на дату записаться
 
         '''
+        # print(self.__dates)
         if date not in self.__dates:
             return 0
 
-        return self.__dates[date][::2]
+        return self.__dates[date]
     
 
     # Пытаемся записаться на какое-то время какого-то дня
@@ -95,6 +97,8 @@ class googleSheet():
         if (date not in self.__dates):
             return 0
 
+        # print(time)
+        # print(self.__dates[date])
         # Если на это время записаться нельзя
         if (time not in self.__dates[date]):
             return -1
@@ -105,22 +109,22 @@ class googleSheet():
         # Находим индекс номера строки выбранного времени
         index = self.__dates[date].index(time) + 1
 
-        # Обновляем кэш
-        a = int(self.__dates[date][index]) - 1
-        # print(a)
-        self.__values[a][2:7] = data
+        # # Обновляем кэш
+        # a = int(self.__dates[date][index]) - 1
+        # # print(a)
+        # self.__values[a][2:7] = data
 
         # Изменяем таблицу
         self.__make_record(self.__dates[date][index], data)
 
-        # Если больше свободного времени нет в таблице, удаляем это время
-        if (len(self.__dates[date]) == 2):
-            del self.__dates[date]
-            return 1
+        # # Если больше свободного времени нет в таблице, удаляем это время
+        # if (len(self.__dates[date]) == 2):
+        #     del self.__dates[date]
+        #     return 1
 
-        # Удаляем из кэша запись
-        del self.__dates[date][index-1]
-        del self.__dates[date][index-1]
+        # # Удаляем из кэша запись
+        # del self.__dates[date][index-1]
+        # del self.__dates[date][index-1]
 
         return 1
 
@@ -138,14 +142,34 @@ class googleSheet():
         counter = 0
         answer = []
 
+        # Ищем записи с tg_id пользователя во всех записях
         for i in self.__values:
             counter += 1
 
+            # Ставим текущую дату
             if i[0] != "":
                 cur_day = i[0]
             
-            if i[5] == tg_id:
-                answer.append(i[0] + " " + i[1])
-                answer.append(counter)
+            if i[6] == tg_id:
+                answer.append(cur_day + " " + i[1])
+                answer.append(str(counter))
                 
         return answer
+
+    # Отмена записи
+    def decline_record(self, tg_id, row):
+        tg_id = str(tg_id)
+        
+        # Получаем мои записи
+        records = self.get_my_record(tg_id)
+
+        # Ищем в них ту, в которой строка нужная
+        for i in range(0, len(records)-1, 2):
+            if (records[i+1] == row):
+                # Удаляем
+                self.__make_record(row, ['','','','',''])
+                return 1
+
+        # Не получилось найти
+        return 0        
+
